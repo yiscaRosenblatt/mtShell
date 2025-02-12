@@ -7,7 +7,7 @@ int main(int argc, char const *argv[])
     welcome();
     while (1)
     {
-        int isPipe = 0;
+        // int isPipe = 0;
         getLocation();
 
         char *input = inputFromUser();
@@ -15,6 +15,13 @@ int main(int argc, char const *argv[])
         // puts(input);
        
         char **arguments = splitArguments(input);
+        int isPipe = -1;
+        for (int i = 0; arguments[i] != NULL; i++) {
+            if (strcmp(arguments[i], "|") == 0) {
+                isPipe = i;
+                break;
+            }
+        }
 
         if (strcmp(input, "exit") == 0)
         {
@@ -31,15 +38,15 @@ int main(int argc, char const *argv[])
         }
         else if (strcmp(input, "delete") == 0)
         {
-            puts("Impl");
+            delete(arguments[1]);
         }
         else if (strcmp(input, "dir") == 0)
         {
             puts("Impl");
         }
-        else if (isPipe)
-        {
-            myPipe(arguments,arguments+isPipe+1);
+        else if (isPipe != -1) {
+            arguments[isPipe] = NULL;  // Null-terminate the first command
+            myPipe(arguments, arguments + isPipe + 1);
         }
         else
         {

@@ -15,3 +15,6 @@ void logout();
 void myPipe(char** argv1, char** argv2);
 void cd(char **arguments);
 void cp(char **arguments);
+void delete (char *str);
+
+

@@ -200,9 +200,21 @@ void cp(char **arguments){
 
 }
 
+void delete (char *str){
+    int status;
+   status = remove(str);
+   if( status == 0 )
+      printf("%s file deleted successfully.\n",str);
+   else
+   {
+      printf("Unable to delete the file\n");
+      perror("Error");
+   }
+}
 
 
 void systemCall(char **arguments)
+
 {
     puts("systemCall");
     pid_t pid = fork();
@@ -221,17 +233,17 @@ void systemCall(char **arguments)
         }
     }
 }
+
+
 void myPipe(char **argv1, char **argv2)
 {
 
     int fd[2];
-
     if (fork() == 0)
     {
         pipe(fd);
         if (fork() == 0)
         {
-
             close(STDOUT_FILENO);
             dup2(fd[1], STDOUT_FILENO);
             close(fd[1]);
