@@ -16,5 +16,9 @@ void myPipe(char** argv1, char** argv2);
 void cd(char **arguments);
 void cp(char **arguments);
 void delete (char *str);
-
+void move(char **args);
+void echoppend(char **args);
+void echowrite(char **args);
+void myRead(char **args);
+void wordCount(char **args);
 

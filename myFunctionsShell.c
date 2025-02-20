@@ -1,4 +1,8 @@
 #include "myFunctionsShell.h"
+#include <sys/stat.h>
+#include <errno.h>
+#include <libgen.h>
+#include <string.h>
 
 char *inputFromUser()
 {
@@ -15,48 +19,40 @@ char *inputFromUser()
 
     return input;
 }
-// [l,s, ,-,l, ,-,s, ,-,u,\0]
-// [l,s,\0,-,l,\0,-,s,\0,-,u,\0]
-//[input,input+3,input+6,input+9, NULL]
-//"ls\0-l\0-s\0-u\0"
-//["ls", "-l", "-s" ,"-u",NULL]
 
-// [ , , , , ,l,s, ,-,l, ,-,s, ,-,u,\0]
-// [\0,\0,\0,\0,\0,l,s, ,-,l, ,-,s, ,-,u,\0]
-//[input+5,input+8,input+1,input+14, NULL]
-//"ls\0-l\0-s\0-u\0"
-//["ls", "-l", "-s" ,"-u",NULL]
 char **splitArguments(char *str)
 {
 
-   int len = strlen(str);
+    int len = strlen(str);
     int ind = 0;
 
-    char** words = calloc(len+1, sizeof(char*));
+    char **words = calloc(len + 1, sizeof(char *));
 
     int stringMode = 0;
 
-    words[0] = str; 
+    words[0] = str;
 
-    if(str[0] == '"'){
+    if (str[0] == '"')
+    {
         str[0] = str[1];
         stringMode = !stringMode;
     }
-        
 
-    for (int i = 0; i < len; i++) {
-        if (str[i] == '"') {
+    for (int i = 0; i < len; i++)
+    {
+        if (str[i] == '"')
+        {
             stringMode = !stringMode;
             str[i] = '\0';
         }
 
-    
-        if (str[i] == ' ' && !stringMode) {
+        if (str[i] == ' ' && !stringMode)
+        {
 
             str[i] = '\0';
-            
 
-            if(str[i+1] == '"'){
+            if (str[i + 1] == '"')
+            {
                 words[++ind] = &str[i + 2];
             }
             else
@@ -64,27 +60,29 @@ char **splitArguments(char *str)
         }
     }
 
-    if (stringMode) {
+    if (stringMode)
+    {
         puts("Error: Unclosed string detected");
         return NULL;
     }
 
-    if(str[len-1] == '"'){
-        str[len-1] = '\0';
+    if (str[len - 1] == '"')
+    {
+        str[len - 1] = '\0';
     }
 
+    // for (int i = 0; i <= ind; i++) {
+    //     puts(words[i]);
+    // }
 
-        // for (int i = 0; i <= ind; i++) {
-        //     puts(words[i]);
-        // }
+    words = realloc(words, sizeof(char *) * (ind + 2));
+    if (words == NULL)
+    {
+        perror("Error reallocating memory");
+        return NULL;
+    }
 
-        words = realloc(words, sizeof(char*) * (ind + 2));
-        if (words == NULL) {
-            perror("Error reallocating memory");
-            return NULL;
-        }
-    
-        words[ind + 1] = NULL;
+    words[ind + 1] = NULL;
 
     return words;
 }
@@ -118,7 +116,6 @@ void getLocation()
         snprintf(cwd, sizeof(cwd), "unknown");
     }
 
-
     // הדפסת שורת הפקודה
 
     printf("\033[0;32m"); // מפעיל צבע ירוק
@@ -138,32 +135,39 @@ void logout(char *input)
     exit(EXIT_SUCCESS);
 }
 
-void cd(char **arguments){
+void cd(char **arguments)
+{
     int size = 0;
-    while (arguments[size] != NULL) {
+    while (arguments[size] != NULL)
+    {
         size++;
     }
-    
-    if(size>2){
+
+    if (size > 2)
+    {
         perror("to manny arguments");
     }
-    else if(size==1){
+    else if (size == 1)
+    {
         chdir(getenv("HOME"));
-    }else{
-        chdir(arguments[1]);  
     }
-
+    else
+    {
+        chdir(arguments[1]);
+    }
 }
 
-void cp(char **arguments){
+void cp(char **arguments)
+{
 
     int size = 0;
-    while (arguments[size] != NULL) {
+    while (arguments[size] != NULL)
+    {
         size++;
     }
-    
 
-    if(size!=3){
+    if (size != 3)
+    {
         perror("too less or too manny arguments");
         return;
     }
@@ -171,15 +175,12 @@ void cp(char **arguments){
     FILE *fptr1, *fptr2;
     int c;
 
-
-
     fptr1 = fopen(arguments[1], "r");
     if (fptr1 == NULL)
     {
         printf("Cannot open file %s\n", arguments[1]);
         exit(1);
     }
-
 
     fptr2 = fopen(arguments[2], "w");
     if (fptr2 == NULL)
@@ -193,25 +194,22 @@ void cp(char **arguments){
         fputc(c, fptr2);
     }
 
-
     fclose(fptr1);
     fclose(fptr2);
-    
-
 }
 
-void delete (char *str){
+void delete(char *str)
+{
     int status;
-   status = remove(str);
-   if( status == 0 )
-      printf("%s file deleted successfully.\n",str);
-   else
-   {
-      printf("Unable to delete the file\n");
-      perror("Error");
-   }
+    status = remove(str);
+    if (status == 0)
+        printf("%s file deleted successfully.\n", str);
+    else
+    {
+        printf("Unable to delete the file\n");
+        perror("Error");
+    }
 }
-
 
 void systemCall(char **arguments)
 
@@ -233,7 +231,6 @@ void systemCall(char **arguments)
         }
     }
 }
-
 
 void myPipe(char **argv1, char **argv2)
 {
@@ -258,3 +255,198 @@ void myPipe(char **argv1, char **argv2)
         execvp(argv2[0], argv2);
     }
 }
+
+void move(char **args)
+{
+    int size = 0;
+    while (args[size] != NULL)
+    {
+        size++;
+    }
+
+    if (size != 3)
+    {
+        fprintf(stderr, "Error: Too few or too many arguments.\n");
+        return;
+    }
+
+    char *src = args[1];
+    char *dest = args[2];
+    struct stat statbufSrc, statbufDest;
+
+    if (stat(src, &statbufSrc) != 0)
+    {
+        fprintf(stderr, "Error: Source file \"%s\" does not exist: %s\n", src, strerror(errno));
+        return;
+    }
+
+    int isDestDir = (stat(dest, &statbufDest) == 0 && S_ISDIR(statbufDest.st_mode));
+
+    char *finalDest;
+    if (isDestDir)
+    {
+        finalDest = malloc(strlen(dest) + strlen(basename(src)) + 2);
+        sprintf(finalDest, "%s/%s", dest, basename(src));
+    }
+    else
+    {
+        finalDest = strdup(dest);
+    }
+
+    if (rename(src, finalDest) != 0)
+    {
+        fprintf(stderr, "Error: Unable to move \"%s\" to \"%s\": %s\n", src, finalDest, strerror(errno));
+    }
+    else
+    {
+        printf("Moved \"%s\" to \"%s\" successfully.\n", src, finalDest);
+    }
+
+    free(finalDest);
+}
+
+void echoppend(char **args)
+{
+
+    int size = 0;
+    while (args[size] != NULL)
+    {
+        size++;
+    }
+
+    if (size < 2)
+    {
+        fprintf(stderr, "Error: Too few arguments.\n");
+        return;
+    }
+    char *src = args[size - 1];
+    FILE *fptr1;
+    fptr1 = fopen(src, "a");
+    if (fptr1 == NULL)
+    {
+        fprintf(stderr, "Error: Unable to open file \"%s\".\n", src);
+        return;
+    }
+
+    for (int i = 1; i < size - 2; i++)
+    {
+        fputs(args[i], fptr1);
+        fputs(" ", fptr1);
+    }
+    fputs("\n", fptr1);
+
+    fclose(fptr1);
+}
+
+void echowrite(char **args)
+{
+    int size = 0;
+    while (args[size] != NULL)
+    {
+        size++;
+    }
+
+    if (size < 2)
+    {
+        fprintf(stderr, "Error: Too few arguments.\n");
+        return;
+    }
+    char *src = args[size - 1];
+    FILE *fptr1;
+    fclose(fopen(src, "w"));
+    fptr1 = fopen(src, "a");
+    if (fptr1 == NULL)
+    {
+        fprintf(stderr, "Error: Unable to open file \"%s\".\n", src);
+        return;
+    }
+
+    for (int i = 1; i < size - 2; i++)
+    {
+        fputs(args[i], fptr1);
+        fputs(" ", fptr1);
+    }
+    fputs("\n", fptr1);
+
+    fclose(fptr1);
+}
+
+void myRead(char **args)
+{
+    int size = 0;
+    while (args[size] != NULL)
+    {
+        size++;
+    }
+
+    if (size != 2)
+    {
+        fprintf(stderr, "Error: Too few or many arguments.\n");
+        return;
+    }
+    char buffer[256];
+    char *src = args[1];
+    FILE *fptr1;
+    fptr1 = fopen(src, "r");
+    if (fptr1 == NULL)
+    {
+        fprintf(stderr, "Error: Unable to open file \"%s\"\n", src);
+        return;
+    }
+    while (fgets(buffer, sizeof(buffer), fptr1) != NULL)
+    {
+        printf("%s", buffer);
+    }
+}
+
+void wordCount(char **args)
+
+{
+    int size = 0;
+    while (args[size] != NULL)
+    {
+        size++;
+    }
+
+    if (size != 3)
+    {
+        fprintf(stderr, "Error: Too few or too many arguments.\n");
+        return;
+    }
+    char buffer[256];
+    char *src = args[2];
+    FILE *fptr1;
+    int cont = 0;
+    fptr1 = fopen(src, "r");
+    if (fptr1 == NULL)
+    {
+        fprintf(stderr, "Error: Unable to open file \"%s\"\n", src);
+        return;
+    }
+    if (strcmp(args[1], "-l") == 0)
+    {
+        while (fgets(buffer, sizeof(buffer), fptr1) != NULL)
+        {
+            cont++;
+        }
+    }
+    else if (strcmp(args[1], "-w") == 0)
+    {
+        while (fgets(buffer, sizeof(buffer), fptr1) != NULL)
+        {
+            char *token = strtok(buffer, "\n"); 
+            while (token != NULL)
+            {
+                cont++;                        
+                token = strtok(NULL, "\n"); 
+            }
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error: you need to chose -l or -w\n");
+        return;
+    }
+    printf("%d\n", cont);
+}
+
